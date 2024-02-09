@@ -1,67 +1,42 @@
 <template>
-  <div :class="dayClasses">
+  <div :class="dayClasses" ref="calendarDay">
     <!--Highlights-->
     <div v-if="hasHighlights" class="vc-highlights vc-day-layer">
-      <div
-        v-for="{ key, wrapperClass, class: bgClass, style } in highlights"
-        :key="key"
-        :class="wrapperClass"
-      >
+      <div v-for="{ key, wrapperClass, class: bgClass, style } in highlights" :key="key" :class="wrapperClass">
         <div :class="bgClass" :style="style" />
       </div>
     </div>
     <!--Content-->
-    <CalendarSlot
-      name="day-content"
-      :day="day"
-      :attributes="attributes"
-      :attribute-cells="attributeCells"
-      :dayProps="dayContentProps"
-      :dayEvents="dayContentEvents"
-      :locale="locale"
-    >
-      <div
-        v-bind="dayContentProps"
-        v-on="dayContentEvents"
-        v-popover="dayPopover"
-      >
+    <CalendarSlot name="day-content" :day="day" :attributes="attributes" :attribute-cells="attributeCells"
+      :dayProps="dayContentProps" :dayEvents="dayContentEvents" :locale="locale">
+      <div ref="dayContent" v-bind="dayContentProps" v-on="dayContentEvents" v-popover="dayPopover">
         {{ day.label }}
       </div>
     </CalendarSlot>
     <!--Dots-->
     <div v-if="hasDots" class="vc-day-layer vc-day-box-center-bottom">
       <div class="vc-dots">
-        <span
-          v-for="{ key, class: bgClass, style } in dots"
-          :key="key"
-          :class="bgClass"
-          :style="style"
-        />
+        <span v-for="{ key, class: bgClass, style } in dots" :key="key" :class="bgClass" :style="style" />
       </div>
     </div>
     <!--Bars-->
     <div v-if="hasBars" class="vc-day-layer vc-day-box-center-bottom">
       <div class="vc-bars">
-        <span
-          v-for="{ key, class: bgClass, style } in bars"
-          :key="key"
-          :class="bgClass"
-          :style="style"
-        />
+        <span v-for="{ key, class: bgClass, style } in bars" :key="key" :class="bgClass" :style="style" />
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { type PropType, computed, defineComponent } from 'vue';
+import { type PropType, computed, defineComponent, Ref, ref, watch } from 'vue';
 import { useCalendar } from '../../use/calendar';
 import { useSlot } from '../../use/slots';
 import type { Attribute, PopoverConfig } from '../../utils/attribute';
 import type { DateRangeCell } from '../../utils/date/range';
 import { arrayHasItems, defaults, get, last } from '../../utils/helpers';
 import type { CalendarDay } from '../../utils/page';
-import { popoverDirective } from '../../utils/popovers';
+import { forceUpdateHandlers, popoverDirective } from '../../utils/popovers';
 import CalendarSlot from './CalendarSlot.vue';
 
 export default defineComponent({
@@ -70,7 +45,8 @@ export default defineComponent({
   props: {
     day: { type: Object as PropType<CalendarDay>, required: true },
   },
-  setup(props) {
+  setup(props)
+  {
     const {
       locale,
       theme,
@@ -84,14 +60,19 @@ export default defineComponent({
       onDayKeydown,
     } = useCalendar();
 
+    const calendarDay: Ref<HTMLElement | null> = ref(null);
+    const dayContent: Ref<HTMLElement | null> = ref(null);
+
     const day = computed(() => props.day);
-    const attributeCells = computed(() => {
+    const attributeCells = computed(() =>
+    {
       return attributeContext.value.getCells(day.value);
     });
     const attributes = computed(() =>
       attributeCells.value.map(cell => cell.data as Attribute),
     );
-    const attributedDay = computed(() => {
+    const attributedDay = computed(() =>
+    {
       return {
         ...day.value,
         attributes: attributes.value,
@@ -102,7 +83,8 @@ export default defineComponent({
     function processPopover(
       { data: attribute }: DateRangeCell<Attribute>,
       { popovers }: { popovers: PopoverConfig[] },
-    ) {
+    )
+    {
       const { key, customData, popover } = attribute;
       if (!popover) return;
       const resolvedPopover = defaults(
@@ -121,12 +103,14 @@ export default defineComponent({
       popovers.splice(0, 0, resolvedPopover);
     }
 
-    const glyphs = computed(() => {
+    const glyphs = computed(() =>
+    {
       const result = {
         ...theme.value.prepareRender({}),
         popovers: [],
       };
-      attributeCells.value.forEach(cell => {
+      attributeCells.value.forEach(cell =>
+      {
         theme.value.render(cell, result);
         processPopover(cell, result);
       });
@@ -150,7 +134,8 @@ export default defineComponent({
     );
 
     const dayContentSlot = useSlot('day-content');
-    const dayClasses = computed(() => {
+    const dayClasses = computed(() =>
+    {
       return [
         'vc-day',
         ...day.value.classes,
@@ -159,11 +144,14 @@ export default defineComponent({
       ];
     });
 
-    const dayContentProps = computed(() => {
+    const dayContentProps = computed(() =>
+    {
       let tabindex;
-      if (day.value.isFocusable) {
+      if (day.value.isFocusable)
+      {
         tabindex = '0';
-      } else {
+      } else
+      {
         tabindex = '-1';
       }
       const classes = [
@@ -186,31 +174,39 @@ export default defineComponent({
       };
     });
 
-    const dayContentEvents = computed(() => {
+    const dayContentEvents = computed(() =>
+    {
       return {
-        click(event: MouseEvent) {
+        click(event: MouseEvent)
+        {
           onDayClick(attributedDay.value, event);
         },
-        mouseenter(event: MouseEvent) {
+        mouseenter(event: MouseEvent)
+        {
           onDayMouseenter(attributedDay.value, event);
         },
-        mouseleave(event: MouseEvent) {
+        mouseleave(event: MouseEvent)
+        {
           onDayMouseleave(attributedDay.value, event);
         },
-        focusin(event: FocusEvent) {
+        focusin(event: FocusEvent)
+        {
           onDayFocusin(attributedDay.value, event);
         },
-        focusout(event: FocusEvent) {
+        focusout(event: FocusEvent)
+        {
           onDayFocusout(attributedDay.value, event);
         },
-        keydown(event: KeyboardEvent) {
+        keydown(event: KeyboardEvent)
+        {
           onDayKeydown(attributedDay.value, event);
         },
       };
     });
 
-    const dayPopover = computed(() => {
-      if (!arrayHasItems(popovers.value)) return null;
+    const dayPopover = computed(() =>
+    {
+      if (!arrayHasItems(popovers.value)) return {};
       return defaults(
         {
           id: dayPopoverId.value,
@@ -218,6 +214,15 @@ export default defineComponent({
         },
         ...popovers.value,
       );
+    });
+
+    watch(() => Object.keys(dayPopover.value), () =>
+    {
+      if (Object.keys(dayPopover.value).length > 0)
+      {
+        forceUpdateHandlers(calendarDay.value, dayPopover.value);
+        forceUpdateHandlers(dayContent.value, dayPopover.value);
+      }
     });
 
     return {
@@ -236,6 +241,8 @@ export default defineComponent({
       hasHighlights,
       locale,
       popovers,
+      calendarDay,
+      dayContent
     };
   },
 });
@@ -305,9 +312,11 @@ export default defineComponent({
   border-radius: var(--vc-rounded-full);
   user-select: none;
   cursor: pointer;
+
   &:hover {
     background-color: var(--vc-day-content-hover-bg);
   }
+
   &.vc-disabled {
     color: var(--vc-day-content-disabled-color);
   }
@@ -331,16 +340,19 @@ export default defineComponent({
 .vc-highlight {
   width: 28px;
   height: 28px;
+
   &.vc-highlight-base-start {
     width: 50% !important;
     border-radius: 0 !important;
     border-right-width: 0 !important;
   }
+
   &.vc-highlight-base-end {
     width: 50% !important;
     border-radius: 0 !important;
     border-left-width: 0 !important;
   }
+
   &.vc-highlight-base-middle {
     width: 100%;
     border-radius: 0 !important;
@@ -357,10 +369,12 @@ export default defineComponent({
   border-color: var(--vc-highlight-outline-border);
   border-radius: var(--vc-rounded-full);
 }
+
 .vc-highlight-bg-light {
   background-color: var(--vc-highlight-light-bg);
   border-radius: var(--vc-rounded-full);
 }
+
 .vc-highlight-bg-solid {
   background-color: var(--vc-highlight-solid-bg);
   border-radius: var(--vc-rounded-full);
@@ -371,10 +385,12 @@ export default defineComponent({
   font-weight: var(--vc-font-bold);
   color: var(--vc-highlight-outline-content-color);
 }
+
 .vc-highlight-content-light {
   font-weight: var(--vc-font-bold);
   color: var(--vc-highlight-light-content-color);
 }
+
 .vc-highlight-content-solid {
   font-weight: var(--vc-font-bold);
   color: var(--vc-highlight-solid-content-color);
@@ -393,6 +409,7 @@ export default defineComponent({
   height: 5px;
   border-radius: 9999px;
   transition: var(--vc-day-content-transition);
+
   &:not(:last-child) {
     margin-right: 3px;
   }
@@ -416,6 +433,7 @@ export default defineComponent({
 .vc-dot {
   background-color: var(--vc-dot-bg);
 }
+
 .vc-bar {
   background-color: var(--vc-bar-bg);
 }

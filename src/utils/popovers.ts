@@ -4,7 +4,8 @@ import { elementContains, on, resolveEl } from './helpers';
 
 export type PopoverVisibility = 'click' | 'hover' | 'hover-focus' | 'focus';
 
-export interface PopoverOptions {
+export interface PopoverOptions
+{
   id: PropertyKey;
   visibility: PopoverVisibility;
   isInteractive: boolean;
@@ -18,7 +19,8 @@ export interface PopoverOptions {
   hideDelay: number;
 }
 
-export interface PopoverState {
+export interface PopoverState
+{
   isVisible: boolean;
   target: unknown;
   data: any;
@@ -35,11 +37,13 @@ export interface PopoverState {
   force: boolean;
 }
 
-export interface PopoverEvent {
+export interface PopoverEvent
+{
   detail: Partial<PopoverOptions>;
 }
 
-export interface PopoverEventHandlers {
+export interface PopoverEventHandlers
+{
   click: (e: MouseEvent) => void;
   mousemove: (e: MouseEvent) => void;
   mouseleave: (e: MouseEvent) => void;
@@ -47,8 +51,10 @@ export interface PopoverEventHandlers {
   focusout: (e: MouseEvent) => void;
 }
 
-export function showPopover(opts: Partial<PopoverOptions>) {
-  if (document) {
+export function showPopover(opts: Partial<PopoverOptions>)
+{
+  if (document)
+  {
     document.dispatchEvent(
       new CustomEvent('show-popover', {
         detail: opts,
@@ -57,8 +63,10 @@ export function showPopover(opts: Partial<PopoverOptions>) {
   }
 }
 
-export function hidePopover(opts: Partial<PopoverOptions>) {
-  if (document) {
+export function hidePopover(opts: Partial<PopoverOptions>)
+{
+  if (document)
+  {
     document.dispatchEvent(
       new CustomEvent('hide-popover', {
         detail: opts,
@@ -67,8 +75,10 @@ export function hidePopover(opts: Partial<PopoverOptions>) {
   }
 }
 
-export function togglePopover(opts: Partial<PopoverOptions>) {
-  if (document) {
+export function togglePopover(opts: Partial<PopoverOptions>)
+{
+  if (document)
+  {
     document.dispatchEvent(
       new CustomEvent('toggle-popover', {
         detail: opts,
@@ -79,7 +89,8 @@ export function togglePopover(opts: Partial<PopoverOptions>) {
 
 export function getPopoverEventHandlers(
   opts: Partial<PopoverOptions>,
-): Partial<PopoverEventHandlers> {
+): Partial<PopoverEventHandlers>
+{
   const { visibility } = opts;
   const click = visibility === 'click';
   const hover = visibility === 'hover';
@@ -89,8 +100,10 @@ export function getPopoverEventHandlers(
   let hovered = false;
   let focused = false;
 
-  const clickHandler = (e: MouseEvent) => {
-    if (click) {
+  const clickHandler = (e: MouseEvent) =>
+  {
+    if (click)
+    {
       togglePopover({
         ...opts,
         target: opts.target || (e.currentTarget as HTMLElement),
@@ -98,10 +111,13 @@ export function getPopoverEventHandlers(
       e.stopPropagation();
     }
   };
-  const mouseMoveHandler = (e: MouseEvent) => {
-    if (!hovered) {
+  const mouseMoveHandler = (e: MouseEvent) =>
+  {
+    if (!hovered)
+    {
       hovered = true;
-      if (hover || hoverFocus) {
+      if (hover || hoverFocus)
+      {
         showPopover({
           ...opts,
           target: opts.target || (e.currentTarget as HTMLElement),
@@ -109,18 +125,24 @@ export function getPopoverEventHandlers(
       }
     }
   };
-  const mouseLeaveHandler = () => {
-    if (hovered) {
+  const mouseLeaveHandler = () =>
+  {
+    if (hovered)
+    {
       hovered = false;
-      if (hover || (hoverFocus && !focused)) {
+      if (hover || (hoverFocus && !focused))
+      {
         hidePopover(opts);
       }
     }
   };
-  const focusInHandler = (e: FocusEvent) => {
-    if (!focused) {
+  const focusInHandler = (e: FocusEvent) =>
+  {
+    if (!focused)
+    {
       focused = true;
-      if (focus || hoverFocus) {
+      if (focus || hoverFocus)
+      {
         showPopover({
           ...opts,
           target: opts.target || (e.currentTarget as HTMLElement),
@@ -128,20 +150,24 @@ export function getPopoverEventHandlers(
       }
     }
   };
-  const focusOutHandler = (e: FocusEvent) => {
+  const focusOutHandler = (e: FocusEvent) =>
+  {
     if (
       focused &&
       !elementContains(e.currentTarget as Node, e.relatedTarget as Element)
-    ) {
+    )
+    {
       focused = false;
-      if (focus || (hoverFocus && !hovered)) {
+      if (focus || (hoverFocus && !hovered))
+      {
         hidePopover(opts);
       }
     }
   };
 
   const handlers: Record<string, Function> = {};
-  switch (opts.visibility) {
+  switch (opts.visibility)
+  {
     case 'click':
       handlers.click = clickHandler;
       break;
@@ -163,7 +189,8 @@ export function getPopoverEventHandlers(
   return handlers;
 }
 
-const removeHandlers = (target: Element | ComponentPublicInstance | string) => {
+const removeHandlers = (target: Element | ComponentPublicInstance | string) =>
+{
   const el = resolveEl(target);
   if (el == null) return;
   const handlers = (el as any).popoverHandlers;
@@ -175,38 +202,52 @@ const removeHandlers = (target: Element | ComponentPublicInstance | string) => {
 const addHandlers = (
   target: Element | ComponentPublicInstance | string,
   opts: Partial<PopoverOptions>,
-) => {
+) =>
+{
   const el = resolveEl(target);
   if (el == null) return;
   const remove: Function[] = [];
   const handlers = getPopoverEventHandlers(opts);
-  Object.entries(handlers).forEach(([event, handler]) => {
+  Object.entries(handlers).forEach(([event, handler]) =>
+  {
     remove.push(on(el, event, handler as EventListener));
   });
   (el as any).popoverHandlers = remove;
 };
 
 export const popoverDirective: Directive = {
-  mounted(el: any, binding: DirectiveBinding<PopoverOptions>) {
+  mounted(el: any, binding: DirectiveBinding<PopoverOptions>)
+  {
     const { value } = binding;
     if (!value) return;
     addHandlers(el, value);
   },
-  updated(el: any, binding: DirectiveBinding<PopoverOptions>) {
+  updated(el: any, binding: DirectiveBinding<PopoverOptions>)
+  {
     const { oldValue, value } = binding;
     const oldVisibility = oldValue?.visibility;
     const newVisibility = value?.visibility;
-    if (oldVisibility !== newVisibility) {
-      if (oldVisibility) {
+    if (oldVisibility !== newVisibility)
+    {
+      if (oldVisibility)
+      {
         removeHandlers(el);
         if (!newVisibility) hidePopover(oldValue);
       }
-      if (newVisibility) {
+      if (newVisibility)
+      {
         addHandlers(el, value);
       }
     }
   },
-  unmounted(el: Element) {
+  unmounted(el: Element)
+  {
     removeHandlers(el);
   },
 };
+
+export function forceUpdateHandlers(el: any, value: any)
+{
+  removeHandlers(el);
+  addHandlers(el, value);
+}
